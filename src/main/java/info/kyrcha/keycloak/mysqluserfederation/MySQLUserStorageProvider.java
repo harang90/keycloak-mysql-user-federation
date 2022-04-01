@@ -59,7 +59,9 @@ public class MySQLUserStorageProvider
         ResultSet rs = null;
         UserModel adapter = null;
 
-        logger.info("getUserByUsername called");
+        logger.info("getUserByUsername called for user: " + username);
+
+				username = username.replace("\\", "");
 
         try {
             String query = "SELECT " + this.config.getConfig().getFirst("usernamecol") + ", "
@@ -301,73 +303,5 @@ public class MySQLUserStorageProvider
             } // ignore
             conn = null;
         }
-    }
-
-    @Override
-    public int getUsersCount(RealmModel realm) {
-        return repository.getUsersCount();
-    }
-
-    @Override
-    public List<UserModel> getUsers(RealmModel realm) {
-        return repository.getAllUsers().stream()
-                .map(user -> new UserAdapter(session, realm, model, user))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<UserModel> getUsers(RealmModel realm, int firstResult, int maxResults) {
-        return getUsers(realm);
-    }
-
-    @Override
-    public List<UserModel> searchForUser(String search, RealmModel realm) {
-        return repository.findUsers(search).stream()
-                .map(user -> new UserAdapter(session, realm, model, user))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<UserModel> searchForUser(String search, RealmModel realm, int firstResult, int maxResults) {
-        return searchForUser(search, realm);
-    }
-
-    @Override
-    public List<UserModel> searchForUser(Map<String, String> params, RealmModel realm) {
-        return getUsers(realm);
-    }
-
-    @Override
-    public List<UserModel> searchForUser(Map<String, String> params, RealmModel realm, int firstResult, int maxResults) {
-        return getUsers(realm, firstResult, maxResults);
-    }
-
-    @Override
-    public List<UserModel> getGroupMembers(RealmModel realm, GroupModel group, int firstResult, int maxResults) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<UserModel> getGroupMembers(RealmModel realm, GroupModel group) {
-        logger.info("getGroupMembers called");
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<UserModel> searchForUserByUserAttribute(String attrName, String attrValue, RealmModel realm) {
-        logger.info("searchForUserByUserAttribute called");
-        return Collections.emptyList();
-    }
-
-    @Override
-    public UserModel addUser(RealmModel realm, String username) {
-        logger.info("addUser called");
-        return null;
-    }
-
-    @Override
-    public boolean removeUser(RealmModel realm, UserModel user) {
-        logger.info("removeUser called");
-        return false;
     }
 }
