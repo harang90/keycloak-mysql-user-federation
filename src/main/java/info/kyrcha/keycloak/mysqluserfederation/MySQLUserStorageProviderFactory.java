@@ -54,17 +54,26 @@ public class MySQLUserStorageProviderFactory implements UserStorageProviderFacto
 
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
+
+				logger.info("getConfigProperties called");
+
         return configMetadata;
     }
 
     @Override
     public String getId() {
+
+				logger.info("getId called");
+
         return PROVIDER_NAME;
     }
 
     @Override
     public void validateConfiguration(KeycloakSession session, RealmModel realm, ComponentModel config)
             throws ComponentValidationException {
+
+				logger.info("validateConfiguration called");
+
         String uri = config.getConfig().getFirst("mysql");
         if (uri == null)
             throw new ComponentValidationException("MySQL connection URI not present");
@@ -83,6 +92,9 @@ public class MySQLUserStorageProviderFactory implements UserStorageProviderFacto
 
     @Override
     public MySQLUserStorageProvider create(KeycloakSession session, ComponentModel config) {
+
+				logger.info("create called");
+
         String uri = config.getConfig().getFirst("mysql");
 
         Connection conn = null;

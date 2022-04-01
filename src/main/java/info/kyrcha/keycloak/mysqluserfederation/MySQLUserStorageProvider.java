@@ -58,6 +58,9 @@ public class MySQLUserStorageProvider
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         UserModel adapter = null;
+
+        logger.info("getUserByUsername called");
+
         try {
             String query = "SELECT " + this.config.getConfig().getFirst("usernamecol") + ", "
                     + this.config.getConfig().getFirst("passwordcol") + " FROM "
@@ -76,9 +79,9 @@ public class MySQLUserStorageProvider
             // Now do something with the ResultSet ....
         } catch (SQLException ex) {
             // handle any errors
-            System.out.println("SQLException: " + ex.getMessage());
-            System.out.println("SQLState: " + ex.getSQLState());
-            System.out.println("VendorError: " + ex.getErrorCode());
+            logger.info("SQLException: " + ex.getMessage());
+            logger.info("SQLState: " + ex.getSQLState());
+            logger.info("VendorError: " + ex.getErrorCode());
         } finally {
             // it is a good idea to release
             // resources in a finally{} block
@@ -117,6 +120,9 @@ public class MySQLUserStorageProvider
 
     @Override
     public UserModel getUserById(String id, RealmModel realm) {
+
+        logger.info("getUserById called");
+
         StorageId storageId = new StorageId(id);
         String username = storageId.getExternalId();
         return getUserByUsername(username, realm);
@@ -124,11 +130,17 @@ public class MySQLUserStorageProvider
 
     @Override
     public UserModel getUserByEmail(String email, RealmModel realm) {
+
+        logger.info("getUserByEmail called");
+
         return null;
     }
 
     @Override
     public boolean isConfiguredFor(RealmModel realm, UserModel user, String credentialType) {
+
+        logger.info("isConfiguredFor called");
+
         String password = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -146,9 +158,9 @@ public class MySQLUserStorageProvider
             // Now do something with the ResultSet ....
         } catch (SQLException ex) {
             // handle any errors
-            System.out.println("SQLException: " + ex.getMessage());
-            System.out.println("SQLState: " + ex.getSQLState());
-            System.out.println("VendorError: " + ex.getErrorCode());
+            logger.info("SQLException: " + ex.getMessage());
+            logger.info("SQLState: " + ex.getSQLState());
+            logger.info("VendorError: " + ex.getErrorCode());
         } finally {
             // it is a good idea to release
             // resources in a finally{} block
@@ -178,13 +190,20 @@ public class MySQLUserStorageProvider
 
     @Override
     public boolean supportsCredentialType(String credentialType) {
+
+        logger.info("suuportsCredentialType called");
+
         return credentialType.equals(CredentialModel.PASSWORD);
     }
 
     @Override
     public boolean isValid(RealmModel realm, UserModel user, CredentialInput input) {
+
+        logger.info("isValid called");
+
         if (!supportsCredentialType(input.getType()))
             return false;
+
         String password = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -202,9 +221,9 @@ public class MySQLUserStorageProvider
             // Now do something with the ResultSet ....
         } catch (SQLException ex) {
             // handle any errors
-            System.out.println("SQLException: " + ex.getMessage());
-            System.out.println("SQLState: " + ex.getSQLState());
-            System.out.println("VendorError: " + ex.getErrorCode());
+            logger.info("SQLException: " + ex.getMessage());
+            logger.info("SQLState: " + ex.getSQLState());
+            logger.info("VendorError: " + ex.getErrorCode());
         } finally {
             // it is a good idea to release
             // resources in a finally{} block
@@ -234,8 +253,14 @@ public class MySQLUserStorageProvider
             return false;
 
         String hex = null;
+
+				// db hash = sha256(sha256(username + sha256(pw)))
+
         if (this.config.getConfig().getFirst("hash").equalsIgnoreCase("SHA1")) {
-            hex = DigestUtils.sha1Hex(input.getChallengeResponse());
+
+            hex = DigestUtils.sha256Hex(input.getChallengeResponse());
+            hex = DigestUtils.sha256Hex(user.getUsername()+hex);
+            hex = DigestUtils.sha256Hex(hex);
         } else {
             hex = DigestUtils.md5Hex(input.getChallengeResponse());
         }
@@ -244,6 +269,9 @@ public class MySQLUserStorageProvider
 
     @Override
     public boolean updateCredential(RealmModel realm, UserModel user, CredentialInput input) {
+
+        logger.info("updateCredential called");
+
         if (input.getType().equals(CredentialModel.PASSWORD))
             throw new ReadOnlyException("user is read only for this update");
 
@@ -262,6 +290,9 @@ public class MySQLUserStorageProvider
 
     @Override
     public void close() {
+
+        logger.info("close called");
+
         if (conn != null) {
             try {
                 conn.close();
@@ -272,4 +303,71 @@ public class MySQLUserStorageProvider
         }
     }
 
+    @Override
+    public int getUsersCount(RealmModel realm) {
+        return repository.getUsersCount();
+    }
+
+    @Override
+    public List<UserModel> getUsers(RealmModel realm) {
+        return repository.getAllUsers().stream()
+                .map(user -> new UserAdapter(session, realm, model, user))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserModel> getUsers(RealmModel realm, int firstResult, int maxResults) {
+        return getUsers(realm);
+    }
+
+    @Override
+    public List<UserModel> searchForUser(String search, RealmModel realm) {
+        return repository.findUsers(search).stream()
+                .map(user -> new UserAdapter(session, realm, model, user))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserModel> searchForUser(String search, RealmModel realm, int firstResult, int maxResults) {
+        return searchForUser(search, realm);
+    }
+
+    @Override
+    public List<UserModel> searchForUser(Map<String, String> params, RealmModel realm) {
+        return getUsers(realm);
+    }
+
+    @Override
+    public List<UserModel> searchForUser(Map<String, String> params, RealmModel realm, int firstResult, int maxResults) {
+        return getUsers(realm, firstResult, maxResults);
+    }
+
+    @Override
+    public List<UserModel> getGroupMembers(RealmModel realm, GroupModel group, int firstResult, int maxResults) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<UserModel> getGroupMembers(RealmModel realm, GroupModel group) {
+        logger.info("getGroupMembers called");
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<UserModel> searchForUserByUserAttribute(String attrName, String attrValue, RealmModel realm) {
+        logger.info("searchForUserByUserAttribute called");
+        return Collections.emptyList();
+    }
+
+    @Override
+    public UserModel addUser(RealmModel realm, String username) {
+        logger.info("addUser called");
+        return null;
+    }
+
+    @Override
+    public boolean removeUser(RealmModel realm, UserModel user) {
+        logger.info("removeUser called");
+        return false;
+    }
 }
