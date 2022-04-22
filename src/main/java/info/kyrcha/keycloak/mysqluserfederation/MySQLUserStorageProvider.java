@@ -21,6 +21,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jboss.logging.Logger;
@@ -117,6 +120,26 @@ public class MySQLUserStorageProvider
             public String getUsername() {
                 return username;
             }
+
+						@Override
+						public Map<String,List<String>> getAttributes() {
+							logger.info("getAttributes called");
+							return null;
+						}
+
+						@Override
+						public List<String> getAttribute(String name) {
+							logger.info("getAttribute called for attribute name: " + name);
+							if (name.contains("admin_role")) {
+								logger.info("setting admin_role as admin_role");
+								List<String> list = new ArrayList<String>();
+								list.add("admin_role");
+								return list;
+							} else {
+								logger.info("not_admin_role");
+							}
+							return null;
+						}
         };
     }
 
